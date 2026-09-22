@@ -93,12 +93,31 @@ def build_profiles(seasons: list[str] | None = None, min_minutes: int = MIN_MINU
     return out
 
 
-def standardize_by_season(profiles: pd.DataFrame, features: list[str] | None = None) -> pd.DataFrame:
+def standardize_by_season(
+    profiles: pd.DataFrame,
+    features: list[str] | None = None,
+    reference: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     """z-score de cada variable dentro de su temporada (ponderado por igual a cada jugador).
 
     Así un jugador se compara con la liga de su año: el aumento general de
-    triples no se confunde con un cambio de rol.
+    triples no se confunde con un cambio de rol. Con `reference`, la media y
+    la desviación se toman de ese conjunto (p. ej. los jugadores con >=500 min)
+    en vez de del propio `profiles`.
     """
     features = features or list(STYLE_FEATURES)
-    grouped = profiles.groupby("SEASON")[features]
-    return (profiles[features] - grouped.transform("mean")) / grouped.transform("std")
+    ref = profiles if reference is None else reference
+    stats = ref.groupby("SEASON")[features].agg(["mean", "std"])
+    mean = stats.xs("mean", axis=1, level=1).loc[profiles["SEASON"]].to_numpy()
+    std = stats.xs("std", axis=1, level=1).loc[profiles["SEASON"]].to_numpy()
+    return pd.DataFrame((profiles[features].to_numpy() - mean) / std, columns=features, index=profiles.index)
+
+
+def shrink_low_minutes(z: pd.DataFrame, minutes: pd.Series, full_at: int = MIN_MINUTES) -> pd.DataFrame:
+    """Acerca a la media de la liga (z = 0) el perfil de quien tiene pocos minutos.
+
+    Con `full_at` minutos o más no se toca; por debajo se multiplica por
+    minutos / full_at: un jugador con 100 min conserva el 20 % de su perfil.
+    """
+    factor = (minutes / full_at).clip(upper=1.0).to_numpy()[:, None]
+    return z * factor

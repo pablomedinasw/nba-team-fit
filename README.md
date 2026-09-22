@@ -14,7 +14,7 @@
 
 - [x] Fase 1: ingesta de estadísticas (jugadores y quintetos) desde stats.nba.com
 - [x] Fase 2: arquetipos (PCA + clustering): 8 roles de jugador
-- [ ] Fase 3: modelo de quintetos y fit
+- [x] Fase 3: modelo de quintetos y fit: calidad individual (RAPM) + complementariedad entre roles, y recomendador
 - [ ] Fase 4: salarios y valor
 - [ ] Fase 5: traspasos
 - [ ] Fase 6: web
@@ -76,7 +76,10 @@ src/nbafit/
   ingest/          descarga desde stats.nba.com
   features.py      perfil de estilo de cada jugador-temporada
   archetypes.py    PCA + GMM -> arquetipos   (python -m nbafit.archetypes)
-  viz/             gráficos de cada fase     (python -m nbafit.viz.archetypes)
+  lineups.py       quintetos con el perfil de sus jugadores
+  fit_model.py     calidad + complementariedad (python -m nbafit.fit_model)
+  recommend.py     mejor jugador para un núcleo (python -m nbafit.recommend --team DEN)
+  viz/             gráficos de cada fase     (python -m nbafit.viz.archetypes | nbafit.viz.fit)
 data/raw/          datos descargados (ignorado por git)
 data/processed/    resultados de los modelos (ignorado por git)
 reports/figures/   gráficos de conclusiones

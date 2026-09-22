@@ -57,6 +57,11 @@ class ArchetypeModel:
     components: np.ndarray      # coordenadas PCA de cada jugador-temporada
     cluster_names: list[str]    # nombre de cada componente del GMM
 
+    def predict_proba(self, z: pd.DataFrame) -> pd.DataFrame:
+        """Probabilidad de cada arquetipo para perfiles ya estandarizados (p. ej. jugadores nuevos)."""
+        probs = self.gmm.predict_proba(self.pca.transform(z[self.z.columns]))
+        return pd.DataFrame(probs, columns=self.cluster_names, index=z.index)[ARCHETYPE_NAMES]
+
     def assignments(self) -> pd.DataFrame:
         """Una fila por jugador-temporada: arquetipo, probabilidad y reparto entre arquetipos."""
         probs = pd.DataFrame(self.gmm.predict_proba(self.components), columns=self.cluster_names)

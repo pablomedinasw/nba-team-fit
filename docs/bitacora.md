@@ -4,6 +4,72 @@ Registro de lo que se va haciendo, las decisiones tomadas y por qué. Lo más re
 
 ---
 
+## 2026-09-22 · Fase 3: modelo de quintetos y fit
+
+**Objetivo:** medir cuánto mejora un quinteto por la *combinación* de sus jugadores (el fit), separándolo de lo buenos que son individualmente, y recomendar el jugador que mejor completa un núcleo.
+
+### Qué se ha hecho
+
+- `src/nbafit/lineups.py`: tabla de quintetos (80 535 quinteto-temporadas, 97,5 % de las posesiones) con el perfil y los arquetipos de sus 5 jugadores. Los jugadores de entre 100 y 500 minutos tienen perfil, pero acercado a la media en proporción a sus minutos (shrinkage).
+- `src/nbafit/fit_model.py`: un único modelo ridge, ponderado por posesiones, para el net rating (y el ofensivo y el defensivo por separado):
+
+  `rating del quinteto = calidad de sus 5 jugadores + control de tiempo basura + complementariedad entre arquetipos`
+
+  - **Calidad**: RAPM de quintetos, con un efecto común del jugador a todas las temporadas más una desviación por temporada.
+  - **Complementariedad**: interacciones entre pares de arquetipos. Solo cuenta lo **no aditivo**, es decir, lo que el quinteto rinde por encima o por debajo de la suma de sus partes.
+  - **Incertidumbre**: bootstrap (50 réplicas) de cada efecto de pareja, y encogimiento hacia 0 según su error (Bayes empírico).
+- `src/nbafit/recommend.py`: dado un núcleo de 1 a 4 jugadores (o un equipo), qué rol le encaja y qué jugadores lo completan mejor (calidad + fit).
+- `src/nbafit/viz/fit.py`: figuras de esta fase.
+
+```powershell
+python -m nbafit.fit_model                           # entrenar, validar y guardar
+python -m nbafit.recommend --team DEN                # núcleo = 4 jugadores con más minutos
+python -m nbafit.recommend --players "Maxey" "Embiid"
+python -m nbafit.viz.fit                             # regenerar figuras
+```
+
+### Decisiones
+
+| Decisión | Por qué |
+|---|---|
+| Ponderar cada quinteto por sus posesiones | La mitad de los quintetos juega 6 posesiones o menos: su net rating es casi todo ruido (±99 con <10 posesiones). |
+| Control de tiempo basura (minutos de temporada de los 5) | Sin él, parte de la "complementariedad" era en realidad que los quintetos de suplentes rinden distinto. Con el control, la señal del fit se reduce a la mitad. |
+| Calidad = efecto común entre temporadas + desviación por temporada | Con una sola temporada, la calidad de un jugador apenas se parece de un año a otro (correlación 0,3). Compartir entre temporadas sube el R² fuera de muestra de 0,0145 a 0,0171. |
+| El fit usa solo **interacciones puras** (matriz doblemente centrada) y solo términos cruzados candidato-núcleo | Como un quinteto siempre suma 5 jugadores, parte de las interacciones es en realidad un efecto lineal por rol, que ya está en la calidad. La primera versión lo contaba dos veces y daba un "bonus fijo por arquetipo" que no dependía del núcleo. |
+| Encoger cada efecto de pareja según su incertidumbre | Solo 3 de las 36 parejas son claramente distintas de 0. Sin encoger, el recomendador se fiaría de ruido (por ejemplo, "otro pívot de referencia al lado de Jokić"). |
+
+### Conclusiones
+
+**1. La complementariedad existe, pero la señal es pequeña.** Añadirla mejora la predicción fuera de muestra en el 75 % de las particiones (t = 3,3).
+
+![Validación](../reports/figures/fase3_1_validacion.png)
+
+**2. Solo tres parejas de roles tienen un efecto claro:**
+- **Base exterior + Pívot de pintura: suma.** Es el pick & roll clásico.
+- **Creador principal + Base exterior: resta.** Dos jugadores que necesitan el balón.
+- **Tirador 3&D + Conector defensivo: resta.** Dos jugadores que no crean.
+
+El choque aparente entre pívot de referencia y pívot de pintura (−0,86) es el mayor en magnitud, pero no es significativo: hay pocos quintetos así.
+
+![Parejas de roles](../reports/figures/fase3_2_parejas.png)
+
+**3. El talento pesa mucho más que el encaje.** La calidad individual va de −2,7 a +3,5 pts/100 (p5-p95) y el fit de un candidato con un núcleo de −0,1 a +0,2. El fit sirve para desempatar entre jugadores de nivel parecido.
+
+![Talento frente a encaje](../reports/figures/fase3_3_talento_vs_encaje.png)
+
+**4. La calidad individual es creíble.** Jokić (+7,6), SGA, Kawhi, Wembanyama y White encabezan 2025-26, y el modelo separa ataque y defensa: Wembanyama y Caruso destacan por su defensa, y Curry y Mitchell por su ataque.
+
+![Top calidad](../reports/figures/fase3_4_top_calidad.png)
+
+### Limitaciones y pendiente
+
+- **La calidad casi no cambia entre temporadas** (correlación 0,98), porque la validación cruzada prefiere un jugador casi constante. No capta bien a jóvenes que mejoran ni a veteranos que declinan; convendría añadir una curva de edad.
+- **El fit se mide a nivel de arquetipo**: todos los jugadores de un mismo rol encajan igual con un núcleo. Un fit por jugador necesitaría más detalle.
+- **Los datos de quintetos agregados no controlan al rival.** Con datos jugada a jugada por tramos (stints) se podría controlar y la señal del fit sería mucho más clara, pero la descarga es mucho mayor.
+- Los equipos se toman de la temporada 2025-26: los fichajes del verano de 2026 no están reflejados. Con `--players` se puede definir el núcleo a mano.
+
+---
+
 ## 2026-09-22 · Fase 2: arquetipos de jugador
 
 **Objetivo:** agrupar a los jugadores por *rol* (qué hacen en pista) para después poder medir qué rol le falta a una plantilla.
