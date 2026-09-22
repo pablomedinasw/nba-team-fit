@@ -4,6 +4,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
 .ipynb_checkpoints/
 
 # Datos descargados y generados (se regeneran con los scripts de ingesta)
