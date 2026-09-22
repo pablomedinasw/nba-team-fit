@@ -13,11 +13,15 @@
 ## Estado
 
 - [x] Fase 1: ingesta de estadísticas (jugadores y quintetos) desde stats.nba.com
-- [ ] Fase 2: arquetipos (PCA + clustering)
+- [x] Fase 2: arquetipos (PCA + clustering): 8 roles de jugador
 - [ ] Fase 3: modelo de quintetos y fit
 - [ ] Fase 4: salarios y valor
 - [ ] Fase 5: traspasos
 - [ ] Fase 6: web
+
+El detalle de cada paso, las decisiones y las conclusiones (con gráficos) están en la [bitácora](docs/bitacora.md).
+
+![Mapa de estilos](reports/figures/fase2_2_mapa_estilos.png)
 
 ## Instalación
 
@@ -70,5 +74,11 @@ src/nbafit/
   config.py        rutas, temporadas, parámetros de la API
   storage.py       lectura/escritura de Parquet
   ingest/          descarga desde stats.nba.com
+  features.py      perfil de estilo de cada jugador-temporada
+  archetypes.py    PCA + GMM -> arquetipos   (python -m nbafit.archetypes)
+  viz/             gráficos de cada fase     (python -m nbafit.viz.archetypes)
 data/raw/          datos descargados (ignorado por git)
+data/processed/    resultados de los modelos (ignorado por git)
+reports/figures/   gráficos de conclusiones
+docs/              bitácora y documentación de variables
 ```
