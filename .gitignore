@@ -13,8 +13,12 @@ data/
 # Editor / SO
 .vscode/
 .idea/
+.obsidian/
 .DS_Store
 Thumbs.db
 
 # Secretos
 .env
+
+# Notas personales
+notas_sistema_nba.md

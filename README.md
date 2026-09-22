@@ -2,8 +2,6 @@
 
 ¿Qué jugador de la NBA encajaría mejor en mi plantilla, qué gano con él y cuánto debería costar comparado con jugadores similares?
 
-La idea completa y los problemas abiertos están en [notas_sistema_nba.md](notas_sistema_nba.md).
-
 ## Enfoque
 
 1. **Perfil de jugador**: vector de estilo y rol (volumen, zonas de tiro, creación, rebote, defensa), normalizado por posesiones y temporada. PCA + clustering para obtener arquetipos.
@@ -55,6 +53,7 @@ Lo ya descargado se salta, salvo con `--force`. Los datos se guardan en `data/ra
 | `lineups_advanced` | Quintetos: ratings y posesiones |
 
 Todo se guarda en totales de temporada regular. Las tasas (por 100 posesiones, etc.) se calculan después.
+Qué significa cada variable de jugador y en qué formato viene: [docs/variables_jugadores.md](docs/variables_jugadores.md).
 
 Para leer un dataset desde Python:
 
